@@ -42,7 +42,6 @@ BOOL                DeleteNotificationIcon();
 BOOL                ShowLowInkBalloon();
 BOOL                ShowNoInkBalloon();
 BOOL                ShowPrintJobBalloon();
-BOOL                RestoreTooltip();
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
@@ -146,15 +145,6 @@ BOOL ShowPrintJobBalloon()
     LoadString(g_hInst, IDS_PRINTJOB_TITLE, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
     LoadString(g_hInst, IDS_PRINTJOB_TEXT, nid.szInfo, ARRAYSIZE(nid.szInfo));
     LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON), LIM_LARGE, &nid.hBalloonIcon);
-    return Shell_NotifyIcon(NIM_MODIFY, &nid);
-}
-
-BOOL RestoreTooltip()
-{
-    // After the balloon is dismissed, restore the tooltip.
-    NOTIFYICONDATA nid = {sizeof(nid)};
-    nid.uFlags = NIF_SHOWTIP | NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
     return Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
@@ -312,16 +302,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
                 s_hwndFlyout = ShowFlyout(hwnd);
             }
-            break;
-
-        case NIN_BALLOONTIMEOUT:
-            RestoreTooltip();
-            break;
-
-        case NIN_BALLOONUSERCLICK:
-            RestoreTooltip();
-            // placeholder for the user clicking on the balloon.
-            MessageBox(hwnd, L"The user clicked on the balloon.", L"User click", MB_OK);
             break;
 
         case WM_CONTEXTMENU:
