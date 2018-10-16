@@ -39,9 +39,6 @@ void                PositionFlyout(HWND hwnd, REFGUID guidIcon);
 void                ShowContextMenu(HWND hwnd, POINT pt);
 BOOL                AddNotificationIcon(HWND hwnd);
 BOOL                DeleteNotificationIcon();
-BOOL                ShowLowInkBalloon();
-BOOL                ShowNoInkBalloon();
-BOOL                ShowPrintJobBalloon();
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
@@ -108,44 +105,6 @@ BOOL DeleteNotificationIcon()
     nid.uFlags = NIF_GUID;
     nid.guidItem = __uuidof(PrinterIcon);
     return Shell_NotifyIcon(NIM_DELETE, &nid);
-}
-
-BOOL ShowLowInkBalloon()
-{
-    // Display a low ink balloon message. This is a warning, so show the appropriate system icon.
-    NOTIFYICONDATA nid = {sizeof(nid)};
-    nid.uFlags = NIF_INFO | NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
-    // respect quiet time since this balloon did not come from a direct user action.
-    nid.dwInfoFlags = NIIF_WARNING | NIIF_RESPECT_QUIET_TIME;
-    LoadString(g_hInst, IDS_LOWINK_TITLE, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
-    LoadString(g_hInst, IDS_LOWINK_TEXT, nid.szInfo, ARRAYSIZE(nid.szInfo));
-    return Shell_NotifyIcon(NIM_MODIFY, &nid);
-}
-
-BOOL ShowNoInkBalloon()
-{
-    // Display an out of ink balloon message. This is a error, so show the appropriate system icon.
-    NOTIFYICONDATA nid = {sizeof(nid)};
-    nid.uFlags = NIF_INFO | NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
-    nid.dwInfoFlags = NIIF_ERROR;
-    LoadString(g_hInst, IDS_NOINK_TITLE, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
-    LoadString(g_hInst, IDS_NOINK_TEXT, nid.szInfo, ARRAYSIZE(nid.szInfo));
-    return Shell_NotifyIcon(NIM_MODIFY, &nid);
-}
-
-BOOL ShowPrintJobBalloon()
-{
-    // Display a balloon message for a print job with a custom icon
-    NOTIFYICONDATA nid = {sizeof(nid)};
-    nid.uFlags = NIF_INFO | NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
-    nid.dwInfoFlags = NIIF_USER | NIIF_LARGE_ICON;
-    LoadString(g_hInst, IDS_PRINTJOB_TITLE, nid.szInfoTitle, ARRAYSIZE(nid.szInfoTitle));
-    LoadString(g_hInst, IDS_PRINTJOB_TEXT, nid.szInfo, ARRAYSIZE(nid.szInfo));
-    LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON), LIM_LARGE, &nid.hBalloonIcon);
-    return Shell_NotifyIcon(NIM_MODIFY, &nid);
 }
 
 void PositionFlyout(HWND hwnd, REFGUID guidIcon)
@@ -255,18 +214,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Parse the menu selections:
             switch (wmId)
             {
-            case IDM_LOWINK:
-                ShowLowInkBalloon();
-                break;
-
-            case IDM_NOINK:
-                ShowNoInkBalloon();
-                break;
-
-            case IDM_PRINTJOB:
-                ShowPrintJobBalloon();
-                break;
-
             case IDM_OPTIONS:
                 // placeholder for an options dialog
                 MessageBox(hwnd,  L"Display the options dialog here.", L"Options", MB_OK);

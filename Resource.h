@@ -5,18 +5,9 @@
 
 #define IDS_APP_TITLE           103
 #define IDS_TOOLTIP             104
-#define IDS_LOWINK_TITLE        105
-#define IDS_LOWINK_TEXT         106
-#define IDS_NOINK_TITLE         107
-#define IDS_NOINK_TEXT          108
-#define IDS_PRINTJOB_TITLE      109
-#define IDS_PRINTJOB_TEXT       110
 
 #define IDR_MAINFRAME           128
 
-#define IDM_LOWINK              121
-#define IDM_PRINTJOB            122
-#define IDM_NOINK               123
 #define IDM_EXIT                124
 #define IDM_OPTIONS             125
 #define IDM_FLYOUT              126
