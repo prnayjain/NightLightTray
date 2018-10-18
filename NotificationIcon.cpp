@@ -9,6 +9,8 @@
 #include <strsafe.h>
 
 HINSTANCE g_hInst = NULL;
+HWND hTrackbar = NULL;
+HBRUSH hbrBkgnd = NULL;
 
 UINT const WMAPP_NOTIFYCALLBACK = WM_APP + 1;
 UINT const WMAPP_HIDEFLYOUT     = WM_APP + 2;
@@ -19,12 +21,12 @@ wchar_t const szWindowClass[] = L"NotificationIconTest";
 wchar_t const szFlyoutWindowClass[] = L"NotificationFlyout";
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("8464caa8-4682-4c11-bf4d-f5d3ca74cf8b")) PrinterIcon;
+class __declspec(uuid("8464caa8-4682-4c11-bf4d-f5d3ca74cf8b")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
-void                RegisterWindowClass(PCWSTR pszClassName, PCWSTR pszMenuName, WNDPROC lpfnWndProc);
+void                RegisterWindowClass();
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-ATOM                RegisterFlyoutClass(HINSTANCE hInstance);
+void				RegisterFlyoutWindowClass();
 LRESULT CALLBACK    FlyoutWndProc(HWND, UINT, WPARAM, LPARAM);
 HWND                ShowFlyout(HWND hwnd);
 void                HideFlyout(HWND hwndMainWindow, HWND hwndFlyout);
@@ -36,8 +38,8 @@ BOOL                DeleteNotificationIcon();
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
     g_hInst = hInstance;
-    RegisterWindowClass(szWindowClass, NULL, WndProc);
-    RegisterWindowClass(szFlyoutWindowClass, NULL, FlyoutWndProc);
+    RegisterWindowClass();
+    RegisterFlyoutWindowClass();
 
     // Create the main window. This could be a hidden window if you don't need
     // any UI other than the notification icon.
@@ -45,7 +47,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int n
     LoadString(hInstance, IDS_APP_TITLE, szTitle, ARRAYSIZE(szTitle));
     HWND hwnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, 0, 250, 200, NULL, NULL, g_hInst, NULL);
-    if (hwnd)
+    
+	if (hwnd)
     {
 		UNREFERENCED_PARAMETER(nCmdShow);
         //ShowWindow(hwnd, nCmdShow);
@@ -61,18 +64,33 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int n
     return 0;
 }
 
-void RegisterWindowClass(PCWSTR pszClassName, PCWSTR pszMenuName, WNDPROC lpfnWndProc)
+void RegisterWindowClass()
 {
     WNDCLASSEX wcex = {sizeof(wcex)};
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = lpfnWndProc;
+    wcex.lpfnWndProc    = WndProc;
     wcex.hInstance      = g_hInst;
     wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = pszMenuName;
-    wcex.lpszClassName  = pszClassName;
+    wcex.lpszMenuName   = NULL;
+    wcex.lpszClassName  = szWindowClass;
     RegisterClassEx(&wcex);
+}
+
+void RegisterFlyoutWindowClass()
+{
+	WNDCLASSEX wcex = { sizeof(wcex) };
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = FlyoutWndProc;
+	wcex.hInstance = g_hInst;
+	wcex.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	//wcex.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));//(HBRUSH)(BLACK_BRUSH);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = NULL;
+	wcex.lpszClassName = szFlyoutWindowClass;
+	RegisterClassEx(&wcex);
 }
 
 BOOL AddNotificationIcon(HWND hwnd)
@@ -82,11 +100,12 @@ BOOL AddNotificationIcon(HWND hwnd)
     // add the icon, setting the icon, tooltip, and callback message.
     // the icon will be identified with the GUID
     nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE | NIF_SHOWTIP | NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
+    nid.guidItem = __uuidof(NightLightIcon);
     nid.uCallbackMessage = WMAPP_NOTIFYCALLBACK;
     LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON), LIM_SMALL, &nid.hIcon);
     LoadString(g_hInst, IDS_TOOLTIP, nid.szTip, ARRAYSIZE(nid.szTip));
-    Shell_NotifyIcon(NIM_ADD, &nid);
+    bool success = Shell_NotifyIcon(NIM_ADD, &nid);
+	if (!success) return false;
 
     // NOTIFYICON_VERSION_4 is prefered
     nid.uVersion = NOTIFYICON_VERSION_4;
@@ -97,7 +116,7 @@ BOOL DeleteNotificationIcon()
 {
     NOTIFYICONDATA nid = {sizeof(nid)};
     nid.uFlags = NIF_GUID;
-    nid.guidItem = __uuidof(PrinterIcon);
+    nid.guidItem = __uuidof(NightLightIcon);
     return Shell_NotifyIcon(NIM_DELETE, &nid);
 }
 
@@ -129,17 +148,25 @@ HWND ShowFlyout(HWND hwndMainWindow)
 {
     // size of the bitmap image (which will be the client area of the flyout window).
     RECT rcWindow = {};
-    rcWindow.right = 214;
-    rcWindow.bottom = 180;
-    DWORD const dwStyle = WS_POPUP | WS_THICKFRAME;
+    rcWindow.right = 200;
+    rcWindow.bottom = 30;
+	DWORD const dwStyle = WS_POPUP | WS_OVERLAPPED;// WS_THICKFRAME;
     // adjust the window size to take the frame into account
     AdjustWindowRectEx(&rcWindow, dwStyle, FALSE, WS_EX_TOOLWINDOW);
 
     HWND hwndFlyout = CreateWindowEx(WS_EX_TOOLWINDOW, szFlyoutWindowClass, NULL, dwStyle,
         CW_USEDEFAULT, 0, rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, hwndMainWindow, NULL, g_hInst, NULL);
+
+	hTrackbar = CreateWindowEx(0, TRACKBAR_CLASS, L"Trackbar Control",
+		WS_CHILD | WS_VISIBLE | TBS_HORZ,
+		0, 0, rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, hwndFlyout, NULL, g_hInst, NULL);
+
+	SendMessage(hTrackbar, TBM_SETRANGE,
+		(WPARAM)TRUE, (LPARAM)MAKELONG(18, 100));  // min. & max. positions*/
+
     if (hwndFlyout)
     {
-        PositionFlyout(hwndFlyout, __uuidof(PrinterIcon));
+        PositionFlyout(hwndFlyout, __uuidof(NightLightIcon));
         SetForegroundWindow(hwndFlyout);
     }
     return hwndFlyout;
@@ -278,7 +305,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-void FlyoutPaint(HWND hwnd, HDC hdc)
+/*void FlyoutPaint(HWND hwnd, HDC hdc)
 {
     // Since this is a DPI aware application (see DeclareDPIAware.manifest), if the flyout window
     // were to show text we would need to increase the size. We could also have multiple sizes of
@@ -302,14 +329,13 @@ void FlyoutPaint(HWND hwnd, HDC hdc)
             DeleteDC(hdcMem);
         }
     }
-}
+}*/
 LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
     case WM_PAINT:
         {
-            // paint a pretty picture
             PAINTSTRUCT ps;
             BeginPaint(hwnd, &ps);
             //FlyoutPaint(hwnd, hdc);
@@ -323,6 +349,23 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             PostMessage(GetParent(hwnd), WMAPP_HIDEFLYOUT, 0, 0);
         }
         break;
+	case WM_CTLCOLORSTATIC:
+			/*
+		if (hwnd == hTrackbar)
+		{
+			HDC hdcStatic = (HDC)wParam;
+			SetTextColor(hdcStatic, RGB(255, 0, 0));
+			SetBkColor(hdcStatic, RGB(0, 255, 0));
+
+			if (hbrBkgnd == NULL)
+			{
+				hbrBkgnd = CreateSolidBrush(RGB(0, 0, 0));
+			}
+			return (INT_PTR)hbrBkgnd;
+			return (LRESULT)GetStockObject(BLACK_BRUSH);
+		}
+		break;
+			*/
     default:
         return DefWindowProc(hwnd, message, wParam, lParam);
     }

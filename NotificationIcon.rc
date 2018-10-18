@@ -97,7 +97,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "NotificationIcon"
-    IDS_TOOLTIP             "Printer icon"
+    IDS_TOOLTIP             "Night Light"
 END
 
 #endif    // English (United States) resources
