@@ -20,8 +20,10 @@ UINT_PTR const HIDEFLYOUT_TIMER_ID = 1;
 
 wchar_t const szWindowClass[] = L"NotificationIconTest";
 wchar_t const szFlyoutWindowClass[] = L"NotificationFlyout";
-WCHAR regPath[530];
+WCHAR regSettingsPath[530];
+WCHAR regStatePath[530];
 WCHAR keyName[265];
+
 
 // Use a guid to uniquely identify our icon
 class __declspec(uuid("8464caa8-4682-4c11-bf4d-f5d3ca74cf8b")) NightLightIcon;
@@ -37,8 +39,10 @@ void                PositionFlyout(HWND hwnd, REFGUID guidIcon);
 void                ShowContextMenu(HWND hwnd, POINT pt);
 BOOL                AddNotificationIcon(HWND hwnd);
 BOOL                DeleteNotificationIcon();
+unsigned int		GetBrightnessLevelIndex(const LPBYTE & settings, const DWORD & size);
 void				SetRegValue(BYTE level);
 BOOL				LoadState();
+void				Toggle();
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
@@ -244,17 +248,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Parse the menu selections:
             switch (wmId)
             {
-            case IDM_OPTIONS:
-                // placeholder for an options dialog
-                MessageBox(hwnd,  L"Display the options dialog here.", L"Options", MB_OK);
-                break;
-
             case IDM_EXIT:
                 DestroyWindow(hwnd);
                 break;
 
-            case IDM_FLYOUT:
-                s_hwndFlyout = ShowFlyout(hwnd);
+            case IDM_TOGGLE:
+				Toggle();
+                //s_hwndFlyout = ShowFlyout(hwnd);
                 break;
 
             default:
@@ -387,10 +387,27 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     return 0;
 }
 
+unsigned int GetBrightnessLevelIndex(const LPBYTE &allocated, const DWORD &size)
+{
+	// Atleast 26 bytes are fixed:
+	// 02 00 00 00 <8 byte time> 00 00 00 00 43 42 01 00 .. CA 14 0E .. CA 1E 00
+	for (auto i = size - 6; i > 26; --i)
+	{
+		if (allocated[i] == 0xCF && allocated[i + 1] == 0x28 &&
+			allocated[i + 3] >= 0x18 && allocated[i + 3] <= 0x65 &&
+			allocated[i + 4] == 0xCA && allocated[i + 5] == 0x32)
+		{
+			return i+3;
+		}
+	}
+	return 0;
+}
+
 void SetRegValue(BYTE level)
 {
+
 	HKEY key;
-	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
+	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regSettingsPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
 	if (status != ERROR_SUCCESS) {return;}
 
 	DWORD size;
@@ -406,7 +423,14 @@ void SetRegValue(BYTE level)
 		return;
 	}
 
-	((BYTE*)allocated)[size - 16] = level;
+	auto idx = GetBrightnessLevelIndex(allocated, size);
+	if (idx == 0)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return;
+	}
+	allocated[idx] = level;
+
 	status = RegSetValueEx(key, keyName, 0,	dataType, (const BYTE*)allocated, size);
 	if (status != ERROR_SUCCESS)
 	{
@@ -421,13 +445,13 @@ void SetRegValue(BYTE level)
 
 BOOL LoadState()
 {
-	LoadString(g_hInst, IDS_REG_SETTING_PATH, regPath, ARRAYSIZE(regPath));
+	LoadString(g_hInst, IDS_REG_SETTING_PATH, regSettingsPath, ARRAYSIZE(regSettingsPath));
+	LoadString(g_hInst, IDS_REG_STATE_PATH, regStatePath, ARRAYSIZE(regStatePath));
+	LoadString(g_hInst, IDS_REG_KEY_NAME, keyName, ARRAYSIZE(keyName));
 
 	HKEY key;
-	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
+	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regSettingsPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
 	if (status != ERROR_SUCCESS) { return false; }
-
-	LoadString(g_hInst, IDS_REG_KEY_NAME, keyName, ARRAYSIZE(keyName));
 
 	DWORD size;
 	DWORD dataType;
@@ -442,7 +466,60 @@ BOOL LoadState()
 		return false;
 	}
 
-	state = ((BYTE*)allocated)[size - 16];
+	auto idx = GetBrightnessLevelIndex(allocated, size);
+	if (idx == 0)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return false;
+	}
+
+	state = allocated[idx];
 	HeapFree(GetProcessHeap(), 0, allocated);
 	return true;
+}
+
+void Toggle()
+{
+	HKEY key;
+	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regStatePath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
+	if (status != ERROR_SUCCESS) { return; }
+
+	DWORD size;
+	DWORD dataType;
+	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
+	if (status != ERROR_SUCCESS) { return; }
+
+	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size+2);
+	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
+	if (status != ERROR_SUCCESS)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return;
+	}
+	auto stateByteIndex = 20U;
+	auto stateByte1 = ((BYTE*)allocated)[stateByteIndex];
+	auto stateByte2 = ((BYTE*)allocated)[stateByteIndex+1];
+
+	if (stateByte1 == 16 && stateByte2 == 0)
+	{
+		//On
+		for (auto i = stateByteIndex; i < size - 2; ++i) allocated[i] = allocated[i + 2];
+		status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size-2);
+	}
+	else
+	{
+		//Off
+		for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 2] = allocated[i];
+		allocated[stateByteIndex] = 16;
+		allocated[stateByteIndex+1] = 0;
+		status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 2);
+	}
+	if (status != ERROR_SUCCESS)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return;
+	}
+
+	status = RegCloseKey(key);
+	HeapFree(GetProcessHeap(), 0, allocated);
 }

@@ -51,7 +51,7 @@ IDC_CONTEXTMENU MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Show Flyout",                 IDM_FLYOUT
+        MENUITEM "Toggle On/Off",               IDM_TOGGLE
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT
     END
@@ -100,6 +100,7 @@ BEGIN
     IDS_TOOLTIP             "Night Light"
     IDS_REG_SETTING_PATH    "Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\Cache\\DefaultAccount\\$$windows.data.bluelightreduction.settings\\Current"
     IDS_REG_KEY_NAME        "DATA"
+    IDS_REG_STATE_PATH      "Software\\Microsoft\\Windows\\CurrentVersion\\CloudStore\\Store\\Cache\\DefaultAccount\\$$windows.data.bluelightreduction.bluelightreductionstate\\Current"
 END
 
 #endif    // English (United States) resources
