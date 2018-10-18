@@ -47,20 +47,11 @@ IDB_PRINTER             BITMAP                  "printer.bmp"
 // Menu
 //
 
-IDC_NOTIFICATIONICON MENU
-BEGIN
-    POPUP "&Test"
-    BEGIN
-        MENUITEM "E&xit",                       IDM_EXIT
-    END
-END
-
 IDC_CONTEXTMENU MENU
 BEGIN
     POPUP ""
     BEGIN
         MENUITEM "Show Flyout",                 IDM_FLYOUT
-        MENUITEM "Options",                     IDM_OPTIONS
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       IDM_EXIT
     END

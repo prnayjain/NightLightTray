@@ -1,10 +1,3 @@
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
-// Copyright (c) Microsoft Corporation. All rights reserved
-
 // we need commctrl v6 for LoadIconMetric()
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib, "comctl32.lib")
@@ -43,7 +36,7 @@ BOOL                DeleteNotificationIcon();
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
     g_hInst = hInstance;
-    RegisterWindowClass(szWindowClass, MAKEINTRESOURCE(IDC_NOTIFICATIONICON), WndProc);
+    RegisterWindowClass(szWindowClass, NULL, WndProc);
     RegisterWindowClass(szFlyoutWindowClass, NULL, FlyoutWndProc);
 
     // Create the main window. This could be a hidden window if you don't need
@@ -54,7 +47,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int n
         CW_USEDEFAULT, 0, 250, 200, NULL, NULL, g_hInst, NULL);
     if (hwnd)
     {
-        ShowWindow(hwnd, nCmdShow);
+		UNREFERENCED_PARAMETER(nCmdShow);
+        //ShowWindow(hwnd, nCmdShow);
 
         // Main message loop:
         MSG msg;
@@ -317,8 +311,8 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         {
             // paint a pretty picture
             PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hwnd, &ps);
-            FlyoutPaint(hwnd, hdc);
+            BeginPaint(hwnd, &ps);
+            //FlyoutPaint(hwnd, hdc);
             EndPaint(hwnd, &ps);
         }
         break;
