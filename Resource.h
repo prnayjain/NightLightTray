@@ -5,6 +5,8 @@
 #define IDC_MYICON                      2
 #define IDS_APP_TITLE                   103
 #define IDS_TOOLTIP                     104
+#define IDS_REG_SETTING_PATH            105
+#define IDS_REG_KEY_NAME                106
 #define IDB_PRINTER                     110
 #define IDM_EXIT                        124
 #define IDM_OPTIONS                     125

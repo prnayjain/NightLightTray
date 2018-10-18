@@ -11,6 +11,7 @@
 HINSTANCE g_hInst = NULL;
 HWND hTrackbar = NULL;
 HBRUSH hbrBkgnd = NULL;
+BYTE state;
 
 UINT const WMAPP_NOTIFYCALLBACK = WM_APP + 1;
 UINT const WMAPP_HIDEFLYOUT     = WM_APP + 2;
@@ -19,6 +20,8 @@ UINT_PTR const HIDEFLYOUT_TIMER_ID = 1;
 
 wchar_t const szWindowClass[] = L"NotificationIconTest";
 wchar_t const szFlyoutWindowClass[] = L"NotificationFlyout";
+WCHAR regPath[530];
+WCHAR keyName[265];
 
 // Use a guid to uniquely identify our icon
 class __declspec(uuid("8464caa8-4682-4c11-bf4d-f5d3ca74cf8b")) NightLightIcon;
@@ -34,12 +37,15 @@ void                PositionFlyout(HWND hwnd, REFGUID guidIcon);
 void                ShowContextMenu(HWND hwnd, POINT pt);
 BOOL                AddNotificationIcon(HWND hwnd);
 BOOL                DeleteNotificationIcon();
+void				SetRegValue(BYTE level);
+BOOL				LoadState();
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR /*lpCmdLine*/, int nCmdShow)
 {
     g_hInst = hInstance;
     RegisterWindowClass();
     RegisterFlyoutWindowClass();
+	LoadState();
 
     // Create the main window. This could be a hidden window if you don't need
     // any UI other than the notification icon.
@@ -163,6 +169,9 @@ HWND ShowFlyout(HWND hwndMainWindow)
 
 	SendMessage(hTrackbar, TBM_SETRANGE,
 		(WPARAM)TRUE, (LPARAM)MAKELONG(18, 100));  // min. & max. positions*/
+
+	SendMessage(hTrackbar, TBM_SETPOS,
+		(WPARAM)TRUE, (LPARAM)state);  // current position
 
     if (hwndFlyout)
     {
@@ -349,6 +358,12 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             PostMessage(GetParent(hwnd), WMAPP_HIDEFLYOUT, 0, 0);
         }
         break;
+	case WM_HSCROLL:
+		if (hTrackbar != NULL) {
+			auto dwPos = SendMessage(hTrackbar, TBM_GETPOS, 0, 0);
+			SetRegValue((BYTE)dwPos);
+		}
+		break;
 	case WM_CTLCOLORSTATIC:
 			/*
 		if (hwnd == hTrackbar)
@@ -370,4 +385,64 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         return DefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
+}
+
+void SetRegValue(BYTE level)
+{
+	HKEY key;
+	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
+	if (status != ERROR_SUCCESS) {return;}
+
+	DWORD size;
+	DWORD dataType;
+	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
+	if (status != ERROR_SUCCESS) { return; }
+
+	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size);
+	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
+	if (status != ERROR_SUCCESS)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return;
+	}
+
+	((BYTE*)allocated)[size - 16] = level;
+	status = RegSetValueEx(key, keyName, 0,	dataType, (const BYTE*)allocated, size);
+	if (status != ERROR_SUCCESS)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return;
+	}
+
+	status = RegCloseKey(key);
+	HeapFree(GetProcessHeap(), 0, allocated);
+	state = level;
+}
+
+BOOL LoadState()
+{
+	LoadString(g_hInst, IDS_REG_SETTING_PATH, regPath, ARRAYSIZE(regPath));
+
+	HKEY key;
+	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
+	if (status != ERROR_SUCCESS) { return false; }
+
+	LoadString(g_hInst, IDS_REG_KEY_NAME, keyName, ARRAYSIZE(keyName));
+
+	DWORD size;
+	DWORD dataType;
+	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
+	if (status != ERROR_SUCCESS) { return false; }
+
+	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size);
+	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
+	if (status != ERROR_SUCCESS)
+	{
+		HeapFree(GetProcessHeap(), 0, allocated);
+		return false;
+	}
+
+	state = ((BYTE*)allocated)[size - 16];
+	HeapFree(GetProcessHeap(), 0, allocated);
+	return true;
 }
