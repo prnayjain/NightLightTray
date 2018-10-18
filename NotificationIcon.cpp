@@ -26,7 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("8464caa8-4682-4c11-bf4d-f5d3ca74cf8b")) NightLightIcon;
+class __declspec(uuid("c6f2b3b4-050c-4bea-af8d-1e9e6bc49e51")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -80,7 +80,7 @@ void RegisterWindowClass()
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = WndProc;
     wcex.hInstance      = g_hInst;
-    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON));
+    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NIGHT_LIGHT));
     wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName   = NULL;
@@ -94,7 +94,7 @@ void RegisterFlyoutWindowClass()
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = FlyoutWndProc;
 	wcex.hInstance = g_hInst;
-	wcex.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON));
+	wcex.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NIGHT_LIGHT));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	//wcex.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));//(HBRUSH)(BLACK_BRUSH);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
@@ -112,7 +112,7 @@ BOOL AddNotificationIcon(HWND hwnd)
     nid.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE | NIF_SHOWTIP | NIF_GUID;
     nid.guidItem = __uuidof(NightLightIcon);
     nid.uCallbackMessage = WMAPP_NOTIFYCALLBACK;
-    LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_NOTIFICATIONICON), LIM_SMALL, &nid.hIcon);
+    LoadIconMetric(g_hInst, MAKEINTRESOURCE(IDI_NIGHT_LIGHT), LIM_SMALL, &nid.hIcon);
     LoadString(g_hInst, IDS_TOOLTIP, nid.szTip, ARRAYSIZE(nid.szTip));
     bool success = Shell_NotifyIcon(NIM_ADD, &nid);
 	if (!success) return false;

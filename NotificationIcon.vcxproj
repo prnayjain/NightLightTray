@@ -183,6 +183,9 @@
   <ItemGroup>
     <ClInclude Include="Resource.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="NightLight.ico" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
