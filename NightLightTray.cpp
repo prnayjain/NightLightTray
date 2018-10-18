@@ -26,8 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-// c6f2b3b4-050c-4bea-af8d-1e9e6bc49e51 debug win32
-class __declspec(uuid("f747d858-aa27-415f-9a13-01df71f9fc12")) NightLightIcon;
+class __declspec(uuid("ea879901-be21-43f7-b164-3b84f4d8981b")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -395,7 +394,7 @@ unsigned int GetBrightnessLevelIndex(const LPBYTE &allocated, const DWORD &size)
 	for (auto i = size - 6; i > 26; --i)
 	{
 		if (allocated[i] == 0xCF && allocated[i + 1] == 0x28 &&
-			allocated[i + 3] >= 0x18 && allocated[i + 3] <= 0x65 &&
+			allocated[i + 3] >= 0x12 && allocated[i + 3] <= 0x65 &&
 			allocated[i + 4] == 0xCA && allocated[i + 5] == 0x32)
 		{
 			return i+3;
