@@ -18,15 +18,16 @@ UINT const WMAPP_HIDEFLYOUT     = WM_APP + 2;
 
 UINT_PTR const HIDEFLYOUT_TIMER_ID = 1;
 
-wchar_t const szWindowClass[] = L"NotificationIconTest";
-wchar_t const szFlyoutWindowClass[] = L"NotificationFlyout";
+wchar_t const szWindowClass[] = L"NightLightTray";
+wchar_t const szFlyoutWindowClass[] = L"NightLightTrayFlyout";
 WCHAR regSettingsPath[530];
 WCHAR regStatePath[530];
 WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("c6f2b3b4-050c-4bea-af8d-1e9e6bc49e51")) NightLightIcon;
+// c6f2b3b4-050c-4bea-af8d-1e9e6bc49e51 debug win32
+class __declspec(uuid("f747d858-aa27-415f-9a13-01df71f9fc12")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();

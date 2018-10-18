@@ -22,6 +22,7 @@
     <ProjectGuid>{E96BBD31-75F6-4CC2-B76E-91C1C9E5AF83}</ProjectGuid>
     <RootNamespace>NotificationIcon</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <ProjectName>NightLightTray</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -170,15 +171,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="NotificationIcon.cpp" />
+    <ClCompile Include="NightLightTray.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="NotificationIcon.ico" />
-    <None Include="printer.bmp" />
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="NotificationIcon.rc" />
+    <ResourceCompile Include="NightLightTray.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h" />
