@@ -26,7 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("ea879901-be21-43f7-b164-3b84f4d8981b")) NightLightIcon;
+class __declspec(uuid("490d2150-20ee-4adc-b622-c69b3584bd60")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -96,7 +96,7 @@ void RegisterFlyoutWindowClass()
 	wcex.hInstance = g_hInst;
 	wcex.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NIGHT_LIGHT));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	//wcex.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));//(HBRUSH)(BLACK_BRUSH);
+	//wcex.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = szFlyoutWindowClass;
@@ -132,14 +132,14 @@ BOOL DeleteNotificationIcon()
 
 void PositionFlyout(HWND hwnd, REFGUID guidIcon)
 {
-    // find the position of our printer icon
+    // find the position of our tray icon
     NOTIFYICONIDENTIFIER nii = {sizeof(nii)};
     nii.guidItem = guidIcon;
     RECT rcIcon;
     HRESULT hr = Shell_NotifyIconGetRect(&nii, &rcIcon);
     if (SUCCEEDED(hr))
     {
-        // display the flyout in an appropriate position close to the printer icon
+        // display the flyout in an appropriate position close to the tray icon
         POINT const ptAnchor = { (rcIcon.left + rcIcon.right) / 2, (rcIcon.top + rcIcon.bottom)/2 };
 
         RECT rcWindow;
@@ -237,7 +237,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (!AddNotificationIcon(hwnd))
         {
             MessageBox(hwnd,
-                L"Please read the ReadMe.txt file for troubleshooting",
+                L"Please read the ReadMe file for troubleshooting",
                 L"Error adding icon", MB_OK);
             return -1;
         }
@@ -314,31 +314,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/*void FlyoutPaint(HWND hwnd, HDC hdc)
-{
-    // Since this is a DPI aware application (see DeclareDPIAware.manifest), if the flyout window
-    // were to show text we would need to increase the size. We could also have multiple sizes of
-    // the bitmap image and show the appropriate image for each DPI, but that would complicate the
-    // sample.
-    static HBITMAP hbmp = NULL;
-    if (hbmp == NULL)
-    {
-        hbmp = (HBITMAP)LoadImage(g_hInst, MAKEINTRESOURCE(IDB_PRINTER), IMAGE_BITMAP, 0, 0, 0);
-    }
-    if (hbmp)
-    {
-        RECT rcClient;
-        GetClientRect(hwnd, &rcClient);
-        HDC hdcMem = CreateCompatibleDC(hdc);
-        if (hdcMem)
-        {
-            HGDIOBJ hBmpOld = SelectObject(hdcMem, hbmp);
-            BitBlt(hdc, 0, 0, rcClient.right, rcClient.bottom, hdcMem, 0, 0, SRCCOPY);
-            SelectObject(hdcMem, hBmpOld);
-            DeleteDC(hdcMem);
-        }
-    }
-}*/
 LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -347,7 +322,6 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         {
             PAINTSTRUCT ps;
             BeginPaint(hwnd, &ps);
-            //FlyoutPaint(hwnd, hdc);
             EndPaint(hwnd, &ps);
         }
         break;
@@ -364,23 +338,6 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 			SetRegValue((BYTE)dwPos);
 		}
 		break;
-	case WM_CTLCOLORSTATIC:
-			/*
-		if (hwnd == hTrackbar)
-		{
-			HDC hdcStatic = (HDC)wParam;
-			SetTextColor(hdcStatic, RGB(255, 0, 0));
-			SetBkColor(hdcStatic, RGB(0, 255, 0));
-
-			if (hbrBkgnd == NULL)
-			{
-				hbrBkgnd = CreateSolidBrush(RGB(0, 0, 0));
-			}
-			return (INT_PTR)hbrBkgnd;
-			return (LRESULT)GetStockObject(BLACK_BRUSH);
-		}
-		break;
-			*/
     default:
         return DefWindowProc(hwnd, message, wParam, lParam);
     }
