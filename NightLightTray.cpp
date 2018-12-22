@@ -26,7 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("490d2150-20ee-4adc-b622-c69b3584bd60")) NightLightIcon;
+class __declspec(uuid("cabf004b-741d-48b2-a98f-0ad94197aaa1")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -446,7 +446,7 @@ void Toggle()
 	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
 	if (status != ERROR_SUCCESS) { return; }
 
-	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size+2);
+	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size+5);
 	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
 	if (status != ERROR_SUCCESS)
 	{
@@ -457,7 +457,7 @@ void Toggle()
 	auto stateByte1 = ((BYTE*)allocated)[stateByteIndex];
 	auto stateByte2 = ((BYTE*)allocated)[stateByteIndex+1];
 
-	if (stateByte1 == 16 && stateByte2 == 0)
+	if (stateByte1 == 0x10 && stateByte2 == 0)
 	{
 		//On
 		for (auto i = stateByteIndex; i < size - 2; ++i) allocated[i] = allocated[i + 2];
@@ -466,10 +466,25 @@ void Toggle()
 	else
 	{
 		//Off
-		for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 2] = allocated[i];
-		allocated[stateByteIndex] = 16;
-		allocated[stateByteIndex+1] = 0;
-		status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 2);
+		if (allocated[stateByteIndex] == 0xD0 &&
+			allocated[stateByteIndex + 1] == 0x0A &&
+			allocated[stateByteIndex + 2] == 0x02)
+		{
+			for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 2] = allocated[i];
+			allocated[stateByteIndex] = 0x10;
+			allocated[stateByteIndex + 1] = 0;
+			status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 2);
+		}
+		else
+		{
+			for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 5] = allocated[i];
+			allocated[stateByteIndex] = 0x10;
+			allocated[stateByteIndex + 1] = 0;
+			allocated[stateByteIndex + 2] = 0xD0;
+			allocated[stateByteIndex + 3] = 0x0A;
+			allocated[stateByteIndex + 4] = 0x02;
+			status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 5);
+		}
 	}
 	if (status != ERROR_SUCCESS)
 	{
