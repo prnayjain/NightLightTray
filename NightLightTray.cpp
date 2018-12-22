@@ -344,6 +344,7 @@ LRESULT CALLBACK FlyoutWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     return 0;
 }
 
+// Get index of the bytes which signify temperature in the registry
 unsigned int GetBrightnessLevelIndex(const LPBYTE &allocated, const DWORD &size)
 {
 	// Atleast 26 bytes are fixed:
@@ -400,6 +401,7 @@ void SetRegValue(BYTE level)
 	state = level;
 }
 
+// Load current temperature from the registry to keep in sync with the control panel
 BOOL LoadState()
 {
 	LoadString(g_hInst, IDS_REG_SETTING_PATH, regSettingsPath, ARRAYSIZE(regSettingsPath));
@@ -458,17 +460,19 @@ void Toggle()
 	auto stateByte2 = ((BYTE*)allocated)[stateByteIndex+1];
 
 	if (stateByte1 == 0x10 && stateByte2 == 0)
+	// Currently On
 	{
-		//On
+		// Remove 10 00 from index 20 to switch off
 		for (auto i = stateByteIndex; i < size - 2; ++i) allocated[i] = allocated[i + 2];
 		status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size-2);
 	}
 	else
+	// Currently Off
 	{
-		//Off
 		if (allocated[stateByteIndex] == 0xD0 &&
 			allocated[stateByteIndex + 1] == 0x0A &&
 			allocated[stateByteIndex + 2] == 0x02)
+		// Constant bytes are already set correctly
 		{
 			for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 2] = allocated[i];
 			allocated[stateByteIndex] = 0x10;
@@ -476,6 +480,8 @@ void Toggle()
 			status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 2);
 		}
 		else
+		// Constant bytes are not set correctly. Happens in case user disables
+		// time scheduled night light when it is already on
 		{
 			for (auto i = size - 1; i >= stateByteIndex; --i) allocated[i + 5] = allocated[i];
 			allocated[stateByteIndex] = 0x10;
