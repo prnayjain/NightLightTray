@@ -26,7 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("cabf004b-741d-48b2-a98f-0ad94197aaa1")) NightLightIcon;
+class __declspec(uuid("8cdf3783-5e1f-4b64-b3e7-19a9f3cd2dc9")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -361,6 +361,31 @@ unsigned int GetBrightnessLevelIndex(const LPBYTE &allocated, const DWORD &size)
 	return 0;
 }
 
+void setUpdateTime(LPBYTE& allocated) {
+	FILETIME ft;
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	SystemTimeToFileTime(&st, &ft);
+	
+	DWORD lastByte1 = 0x000000FF;
+	
+	allocated[4] = (BYTE)(ft.dwLowDateTime & lastByte1);
+	ft.dwLowDateTime >>= 8;
+	allocated[5] = (BYTE)(ft.dwLowDateTime & lastByte1);
+	ft.dwLowDateTime >>= 8;
+	allocated[6] = (BYTE)(ft.dwLowDateTime & lastByte1);
+	ft.dwLowDateTime >>= 8;
+	allocated[7] = (BYTE)(ft.dwLowDateTime & lastByte1);
+
+	allocated[8] = (BYTE)(ft.dwHighDateTime & lastByte1);
+	ft.dwHighDateTime >>= 8;
+	allocated[9] = (BYTE)(ft.dwHighDateTime & lastByte1);
+	ft.dwHighDateTime >>= 8;
+	allocated[10] = (BYTE)(ft.dwHighDateTime & lastByte1);
+	ft.dwHighDateTime >>= 8;
+	allocated[11] = (BYTE)(ft.dwHighDateTime & lastByte1);
+}
+
 void SetRegValue(BYTE level)
 {
 
@@ -380,6 +405,8 @@ void SetRegValue(BYTE level)
 		HeapFree(GetProcessHeap(), 0, allocated);
 		return;
 	}
+
+	setUpdateTime(allocated);
 
 	auto idx = GetBrightnessLevelIndex(allocated, size);
 	if (idx == 0)
@@ -455,6 +482,9 @@ void Toggle()
 		HeapFree(GetProcessHeap(), 0, allocated);
 		return;
 	}
+
+	setUpdateTime(allocated);
+
 	auto stateByteIndex = 20U;
 	auto stateByte1 = ((BYTE*)allocated)[stateByteIndex];
 	auto stateByte2 = ((BYTE*)allocated)[stateByteIndex+1];
