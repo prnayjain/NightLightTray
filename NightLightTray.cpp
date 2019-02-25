@@ -26,7 +26,7 @@ WCHAR keyName[265];
 
 
 // Use a guid to uniquely identify our icon
-class __declspec(uuid("8cdf3783-5e1f-4b64-b3e7-19a9f3cd2dc9")) NightLightIcon;
+class __declspec(uuid("d4842c4c-aca3-4e58-9a7d-13a461098007")) NightLightIcon;
 
 // Forward declarations of functions included in this code module:
 void                RegisterWindowClass();
@@ -391,18 +391,27 @@ void SetRegValue(BYTE level)
 
 	HKEY key;
 	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regSettingsPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
-	if (status != ERROR_SUCCESS) {return;}
+	if (status != ERROR_SUCCESS)
+	{
+		status = RegCloseKey(key);
+		return;
+	}
 
 	DWORD size;
 	DWORD dataType;
 	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
-	if (status != ERROR_SUCCESS) { return; }
+	if (status != ERROR_SUCCESS)
+	{
+		status = RegCloseKey(key);
+		return;
+	}
 
 	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size);
 	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
 	if (status != ERROR_SUCCESS)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return;
 	}
 
@@ -412,6 +421,7 @@ void SetRegValue(BYTE level)
 	if (idx == 0)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return;
 	}
 	allocated[idx] = level;
@@ -420,6 +430,7 @@ void SetRegValue(BYTE level)
 	if (status != ERROR_SUCCESS)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return;
 	}
 
@@ -437,18 +448,27 @@ BOOL LoadState()
 
 	HKEY key;
 	auto status = RegOpenKeyEx(HKEY_CURRENT_USER, regSettingsPath, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &key);
-	if (status != ERROR_SUCCESS) { return false; }
+	if (status != ERROR_SUCCESS)
+	{
+		status = RegCloseKey(key);
+		return false;
+	}
 
 	DWORD size;
 	DWORD dataType;
 	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
-	if (status != ERROR_SUCCESS) { return false; }
+	if (status != ERROR_SUCCESS)
+	{
+		status = RegCloseKey(key);
+		return false;
+	}
 
 	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size);
 	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
 	if (status != ERROR_SUCCESS)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return false;
 	}
 
@@ -456,11 +476,13 @@ BOOL LoadState()
 	if (idx == 0)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return false;
 	}
 
 	state = allocated[idx];
 	HeapFree(GetProcessHeap(), 0, allocated);
+	status = RegCloseKey(key);
 	return true;
 }
 
@@ -473,13 +495,18 @@ void Toggle()
 	DWORD size;
 	DWORD dataType;
 	status = RegQueryValueEx(key, keyName, 0, &dataType, NULL, &size);
-	if (status != ERROR_SUCCESS) { return; }
+	if (status != ERROR_SUCCESS)
+	{
+		status = RegCloseKey(key);
+		return;
+	}
 
 	LPBYTE allocated = (LPBYTE)HeapAlloc(GetProcessHeap(), 0, size+5);
 	status = RegQueryValueEx(key, keyName, 0, &dataType, allocated, &size);
 	if (status != ERROR_SUCCESS)
 	{
 		HeapFree(GetProcessHeap(), 0, allocated);
+		status = RegCloseKey(key);
 		return;
 	}
 
@@ -521,11 +548,6 @@ void Toggle()
 			allocated[stateByteIndex + 4] = 0x02;
 			status = RegSetValueEx(key, keyName, 0, dataType, (const BYTE*)allocated, size + 5);
 		}
-	}
-	if (status != ERROR_SUCCESS)
-	{
-		HeapFree(GetProcessHeap(), 0, allocated);
-		return;
 	}
 
 	status = RegCloseKey(key);
