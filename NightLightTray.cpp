@@ -361,7 +361,7 @@ unsigned int GetBrightnessLevelIndex(const LPBYTE &allocated, const DWORD &size)
 	return 0;
 }
 
-void setUpdateTime(LPBYTE& allocated) {
+void SetUpdateTime(LPBYTE& allocated) {
 	FILETIME ft;
 	SYSTEMTIME st;
 	GetSystemTime(&st);
@@ -406,7 +406,7 @@ void SetRegValue(BYTE level)
 		return;
 	}
 
-	setUpdateTime(allocated);
+	SetUpdateTime(allocated);
 
 	auto idx = GetBrightnessLevelIndex(allocated, size);
 	if (idx == 0)
@@ -483,7 +483,7 @@ void Toggle()
 		return;
 	}
 
-	setUpdateTime(allocated);
+	SetUpdateTime(allocated);
 
 	auto stateByteIndex = 20U;
 	auto stateByte1 = ((BYTE*)allocated)[stateByteIndex];
